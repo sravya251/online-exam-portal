@@ -1,20 +1,12 @@
-# Build stage
-FROM node:18-alpine AS build
+FROM node:13-alpine
  
-WORKDIR /usr/frontend
+WORKDIR /usr/backend
  
-COPY package*.json ./
-RUN npm install
 COPY . .
-RUN npm run build
+RUN rm -rf node_modules/ package-lock.json
  
-# Runtime stage
-FROM node:18-alpine
+RUN npm install nodemon
+RUN npm install
  
-WORKDIR /usr/frontend
  
-COPY --from=build /usr/frontend/build ./build
-RUN npm install -g serve
- 
-EXPOSE 3000
-CMD ["serve", "-s", "build"]
+CMD ["sh", "-c", "npm run start"]
