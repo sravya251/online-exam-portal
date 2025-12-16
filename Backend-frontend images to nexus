@@ -1,0 +1,91 @@
+pipeline {
+
+    agent any
+ 
+    environment {
+
+        NEXUS_REGISTRY = "<NEXUS-IP>:8081"
+
+        BACKEND_IMAGE  = "jsapplication-backend"
+
+        FRONTEND_IMAGE = "jsapplication-frontend"
+
+        IMAGE_TAG      = "${BUILD_NUMBER}"
+
+    }
+ 
+    stages {
+ 
+        stage('Checkout Code') {
+
+            steps {
+
+                git branch: 'dev',
+
+                    url: 'https://github.com/sravya251/online-exam-portal.git'
+
+            }
+
+        }
+ 
+        stage('Build Docker Images') {
+
+            steps {
+
+                script {
+
+                    backend = docker.build("${BACKEND_IMAGE}:${IMAGE_TAG}", "backend")
+
+                    frontend = docker.build("${FRONTEND_IMAGE}:${IMAGE_TAG}", "frontend")
+
+                }
+
+            }
+
+        }
+ 
+        stage('Push Images to Nexus') {
+
+            steps {
+
+                script {
+
+                    docker.withRegistry("http://${NEXUS_REGISTRY}", 'nexus-docker-creds') {
+
+                        backend.push("${IMAGE_TAG}")
+
+                        backend.push("latest")
+ 
+                        frontend.push("${IMAGE_TAG}")
+
+                        frontend.push("latest")
+
+                    }
+
+                }
+
+            }
+
+        }
+
+    }
+ 
+    post {
+
+        success {
+
+            echo "✅ Images pushed to Nexus successfully"
+
+        }
+
+        failure {
+
+            echo "❌ Failed to push images to Nexus"
+
+        }
+
+    }
+
+}
+
+ 
